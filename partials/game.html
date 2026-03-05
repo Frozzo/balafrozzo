@@ -1,0 +1,32 @@
+
+<div id="area-gioco">
+    <div id="header-partita">
+        <div id="indicatore-fase">IN ATTESA...</div>
+        <div id="indicatore-round">ROUND 1 / 5</div>
+    </div>
+    
+    <div id="tavolo-verde">
+        <div id="centro-tavolo">
+            <div id="area-piatto">Piatto: <span id="valore-piatto">€ 0</span></div>
+            <div id="carte-comuni"></div>
+        </div>
+        <div id="annuncio-vincitore"></div>
+        <div class="postazione" id="pos-giocatore" style="display:none;"></div>
+        <div class="postazione" id="pos-bot-1" style="display:none;"></div>
+        <div class="postazione" id="pos-bot-2" style="display:none;"></div>
+        <div class="postazione" id="pos-bot-3" style="display:none;"></div>
+        <div class="postazione" id="pos-bot-4" style="display:none;"></div>
+        <div class="postazione" id="pos-bot-5" style="display:none;"></div>
+    </div>
+
+    <div id="controlli" style="display:none;">
+        <button id="btn-inizia" onclick="prossimoStepMano()">Inizia Round</button>
+        <button id="btn-fold" class="btn-gioco" onclick="faiFold()" disabled>Fold</button>
+        <button id="btn-check" class="btn-gioco" onclick="faiCheck()" disabled>Check</button>
+        <button id="btn-meno" class="btn-piccolo btn-gioco" onclick="cambiaRaise(-50)" disabled>-</button>
+        <button id="btn-raise" class="btn-raise btn-gioco" onclick="faiRaise()" disabled>Raise (€50)</button>
+        <button id="btn-piu" class="btn-piccolo btn-gioco" onclick="cambiaRaise(50)" disabled>+</button>
+        <button id="btn-allin" class="btn-allin btn-gioco" onclick="faiAllIn()" disabled>ALL-IN</button>
+        <button id="btn-reroll" onclick="faiRerollCharm()">Reroll Mano</button>
+    </div>
+</div>

@@ -1,0 +1,32 @@
+<div id="schermata-menu">
+    <div class="titolo-gioco">BALAFROZZO</div>
+    <div class="box-menu-container" id="menu-base">
+        <div class="box-stats">
+            <h3 style="margin-top:0; color: #3498db;">IL TUO PROFILO</h3>
+            <p>Banca: <span class="stat-highlight" id="stat-soldi">€ 0</span></p>
+            <p>Giocate: <span class="stat-highlight" id="stat-giocate">0</span></p>
+            <p>Vittorie: <span class="stat-highlight" id="stat-vinte">0</span></p>
+            <p>Round giocati: <span class="stat-highlight" id="stat-rounds-played">0</span></p>
+            <p>Round vinti: <span class="stat-highlight" id="stat-rounds-won">0</span></p>
+            <p>Round persi: <span class="stat-highlight" id="stat-rounds-lost">0</span></p>
+            <p>Folds effettuati: <span class="stat-highlight" id="stat-folds">0</span></p>
+            <p>Raise effettuati: <span class="stat-highlight" id="stat-raises">0</span></p>
+            <p>All-in effettuati: <span class="stat-highlight" id="stat-allins">0</span></p>
+        </div>
+        <div class="box-opzioni">
+            <h3 style="margin-top:0; color: #4CAF50;">CONFIGURA PARTITA</h3>
+            <input type="text" id="input-nome" class="input-menu" placeholder="Il tuo nome" value="Giocatore"><br>
+            <div style="color: #ccc; margin-bottom: 5px; font-size: 14px;">Numero di Bot (1-5):</div>
+            <input type="number" id="input-bot" class="input-menu" min="1" max="5" value="3" style="width: 80px; margin-bottom: 15px;">
+            <div style="color: #ccc; margin-bottom: 5px; font-size: 14px;">Round da Giocare (1-20):</div>
+            <input type="number" id="input-round" class="input-menu" min="1" max="20" value="5" style="width: 80px;
+"><br>
+            <button class="btn-menu btn-menu-start" id="btn-prepara">PREPARA PARTITA</button>
+        </div>
+    </div>
+    <div id="schermata-charms">
+        <h2 style="color: #f1c40f;">Scegli un Charm (Potenziamento)</h2>
+        <div class="griglia-charms" id="contenitore-charms"></div>
+        <button class="btn-menu btn-menu-start" style="width: 300px; margin-top: 30px;" id="btn-conferma-charm" disabled>ENTRA AL TAVOLO</button>
+    </div>
+</div>

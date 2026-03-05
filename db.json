@@ -1,0 +1,17 @@
+{
+  "users": {
+    "Frozzo": {
+      "passwordHash": "$2b$10$Gi33zVChuo1V03g64aOKBOF0BzqEqOPB0J9oyaDk/MOuaT0KPBLb.",
+      "soldi": 1827060,
+      "giocate": 10,
+      "vinte": 7,
+      "folds": 0,
+      "raises": 6,
+      "allins": 0,
+      "roundsPlayed": 4,
+      "roundsWon": 0,
+      "roundsLost": 4,
+      "charmsUnlocked": []
+    }
+  }
+}
