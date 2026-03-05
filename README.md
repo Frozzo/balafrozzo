@@ -7,5 +7,5 @@ Estremamente buggato, per ora fix più importanti sono
 
 -aggiunta sistema online funzionante
 
-Installa Node.js e runna da powershell facendo cd:/filepath del progetto, poi apri browser da localhost(8080 di default ma te lo dice)
+Installa Node.js e runna il server (server.js) da powershell facendo cd:/filepath del progetto, poi apri browser da localhost(8080 di default ma te lo dice)
 Il server python è di fallback ma non funziona
