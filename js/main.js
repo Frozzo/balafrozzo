@@ -1,101 +1,78 @@
-// Importa i moduli ES6
-import { semi, valori, ottieniValoreChip, balatroScores as balatroScoresData, listaCharms as listaCharmsData, dbJoker as dbJokerData } from './data.js';
-import { Charm } from './Charm.js';
-import { Player } from './Player.js';
-import { Joker } from './Joker.js';
-import { Deck } from './Deck.js';
+// Dati e modelli locali: il gioco gira ora senza server e senza moduli ES6.
+const semi = ['♥', '♦', '♣', '♠'];
+const valori = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
-// === SINTETIZZATORE AUDIO WEB ===
-let audioCtx;
-let bgmOscillator = null; 
-let bgmGain = null; 
-let bgmInterval = null;
-let slotInterval = null;
+function ottieniValoreChip(val) {
+    if (['J', 'Q', 'K', 'A'].includes(val)) return [11, 12, 13, 14][['J', 'Q', 'K', 'A'].indexOf(val)];
+    return parseInt(val);
+}
 
-function inizializzaAudioEAvvia() {
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        avviaBGM();
-    } else if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
+const balatroScores = {
+    "Scala Reale": { chips: 100, mult: 8 },
+    "Scala Colore": { chips: 100, mult: 8 },
+    "Poker": { chips: 60, mult: 7 },
+    "Full": { chips: 40, mult: 4 },
+    "Colore": { chips: 35, mult: 4 },
+    "Scala": { chips: 30, mult: 4 },
+    "Tris": { chips: 30, mult: 3 },
+    "Doppia Coppia": { chips: 20, mult: 2 },
+    "Coppia": { chips: 10, mult: 2 },
+    "Carta Alta": { chips: 5, mult: 1 }
+};
+
+function getListaCharms() {
+    return CharmRegistry.defaultList();
+}
+
+function getDbJoker() {
+    return JokerRegistry.pools;
+}
+
+class Player {
+    constructor({ id, nome, soldi, crediti = 4, isBot = false, posId = '', charm = null, jokers = [] }) {
+        this.id = id;
+        this.nome = nome;
+        this.soldi = soldi;
+        this.crediti = crediti;
+        this.isBot = isBot;
+        this.inGioco = true;
+        this.carte = [];
+        this.posId = posId;
+        this.charm = charm;
+        this.jokers = jokers;
     }
-    mostraSceltaCharms();
 }
 
-function playSound(freq, type, duration, vol=0.1) {
-    if(!audioCtx) return;
-    let osc = audioCtx.createOscillator();
-    let gain = audioCtx.createGain();
-    osc.type = type; 
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-    osc.connect(gain); 
-    gain.connect(audioCtx.destination);
-    osc.start(); 
-    osc.stop(audioCtx.currentTime + duration);
-}
+class Deck {
+    constructor() {
+        this.cards = [];
+        this.reset();
+    }
 
-function playCardDeal() { 
-    playSound(600, 'sine', 0.1, 0.05); 
-    setTimeout(() => playSound(800, 'sine', 0.1, 0.05), 50); 
-}
+    reset() {
+        this.cards = [];
+        for (let s of semi) {
+            for (let v of valori) {
+                this.cards.push({ valore: v, seme: s, valoreChip: ottieniValoreChip(v) });
+            }
+        }
+    }
 
-function playCardFlip() { 
-    playSound(300, 'triangle', 0.15, 0.1); 
-}
+    shuffle() {
+        for (let i = this.cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
+        }
+    }
 
-function playChipClick() { 
-    playSound(1200, 'square', 0.05, 0.05); 
-}
-
-function startSlotSound() {
-    if(slotInterval) clearInterval(slotInterval);
-    let f = 1000;
-    slotInterval = setInterval(() => {
-        playSound(f, 'square', 0.05, 0.02);
-        f = f === 1000 ? 1200 : 1000;
-    }, 50);
-}
-
-function stopSlotSound() { 
-    if(slotInterval) clearInterval(slotInterval); 
-}
-
-function avviaBGM() {
-    if (bgmOscillator) return;
-    bgmOscillator = audioCtx.createOscillator(); 
-    bgmGain = audioCtx.createGain();
-    bgmOscillator.type = 'square';
-    bgmGain.gain.value = 0.05;
-    bgmOscillator.connect(bgmGain); 
-    bgmGain.connect(audioCtx.destination);
-    bgmOscillator.start();
-    
-    // Tema Tetris - Klassika melodia 8bit/16bit
-    // E4 B3 C4 D4 | E4 D4 C4 B3 | A3 A3 C4 E4 | D4 C4 B3 ... (complessa e standard)
-    let notes = [
-        329.63, 246.94, 261.63, 293.66, // E B C D
-        329.63, 293.66, 261.63, 246.94, // E D C B
-        220.00, 220.00, 261.63, 329.63, // A A C E
-        293.66, 261.63, 246.94, 196.00, // D C B G
-        // Sezione più complessa
-        220.00, 220.00, 246.94, 293.66,
-        329.63, 293.66, 261.63, 246.94,
-        196.00, 196.00, 246.94, 329.63,
-        293.66, 261.63, 220.00
-    ];
-    
-    let i = 0;
-    bgmInterval = setInterval(() => {
-        if(audioCtx) bgmOscillator.frequency.setTargetAtTime(notes[i], audioCtx.currentTime, 0.2);
-        i = (i + 1) % notes.length;
-    }, 400);
+    draw() {
+        return this.cards.pop();
+    }
 }
 
 const attendi = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-let statistiche = {
+const defaultStatistiche = {
     soldiTotali: 0,
     giocate: 0,
     vinte: 0,
@@ -108,106 +85,54 @@ let statistiche = {
     roundsLost: 0
 };
 
-// carica statistiche salvate localmente (se presenti) per utente anonimo
-let stored = localStorage.getItem('balafrozzo_stats');
-if (stored) {
-    try {
-        let s = JSON.parse(stored);
-        statistiche = Object.assign(statistiche, s);
-    } catch (e) { console.warn('errore parsing stats locali', e); }
+let statistiche = { ...defaultStatistiche };
+
+function caricaStatisticheLocali() {
+    let stored = localStorage.getItem('balafrozzo_stats');
+    if (stored) {
+        try {
+            let s = JSON.parse(stored);
+            statistiche = Object.assign({ ...defaultStatistiche }, s);
+        } catch (e) {
+            console.warn('errore parsing stats locali', e);
+            statistiche = { ...defaultStatistiche };
+        }
+    }
 }
-let currentUser = localStorage.getItem('balafrozzo_user') || null;
+
+function salvaStatisticheLocali() {
+    localStorage.setItem('balafrozzo_stats', JSON.stringify(statistiche));
+}
+
+let currentUser = null;
 
 function showLoginScreen() {
-    console.log('showLoginScreen called');
-    // cover everything, clear other screens
-    document.getElementById('schermata-login').style.display = 'flex';
-    document.getElementById('pannello-punteggi').style.display = 'none';
-    document.getElementById('schermata-menu').style.display = 'none';
-    document.getElementById('schermata-charms').style.display = 'none';
-    document.getElementById('area-gioco').style.display = 'none';
-    const shopEl = document.getElementById('schermo-shop');
-    if (shopEl) shopEl.style.display = 'none';
-    // reset login form
-    document.getElementById('login-username').value = '';
-    document.getElementById('login-password').value = '';
-    document.getElementById('login-msg').innerText = '';
-    // ensure buttons stay hooked even if screen is re-shown
-    const bLogin = document.getElementById('btn-login');
-    if (bLogin) bLogin.onclick = loginUser;
-    const bReg = document.getElementById('btn-register');
-    if (bReg) bReg.onclick = registerUser;
-    const bGuest = document.getElementById('btn-guest');
-    if (bGuest) bGuest.onclick = () => {
-        console.log('guest play');
-        currentUser = null;
-        localStorage.removeItem('balafrozzo_user');
-        hideLoginScreen();
-        showMenu();
-        initLogoutVisibility();
-    };
+    GameUI.setLoginOverlayVisible(true);
 }
 function hideLoginScreen() {
-    document.getElementById('schermata-login').style.display = 'none';
-    // do not automatically show any other screen; caller decides
+    GameUI.setLoginOverlayVisible(false);
 }
 
 function showMenu() {
-    // ensure login overlay is closed as well
-    document.getElementById('schermata-login').style.display = 'none';
-    document.getElementById('pannello-punteggi').style.display = 'none';
-    document.getElementById('schermata-menu').style.display = 'flex';
-    document.getElementById('menu-base').style.display = 'flex';
-    document.getElementById('schermata-charms').style.display = 'none';
-    document.getElementById('area-gioco').style.display = 'none';
-    const shopEl = document.getElementById('schermo-shop');
-    if (shopEl) shopEl.style.display = 'none';
-    // refresh stats text
+    GameUI.showMenu();
     aggiornaStatsUI();
 }
 
 function logoutUser() {
-    console.log('logoutUser called');
-    window.logoutUser = logoutUser;
     currentUser = null;
-    localStorage.removeItem('balafrozzo_user');
-    // clear stats or keep local? we keep until next load
-    statistiche = {
-        soldiTotali: 0,
-        giocate: 0,
-        vinte: 0,
-        folds: 0,
-        raises: 0,
-        allins: 0,
-        roundsPlayed: 0,
-        roundsWon: 0,
-        roundsLost: 0
-    };
+    statistiche = { ...defaultStatistiche };
+    salvaStatisticheLocali();
     aggiornaStatsUI();
-    document.getElementById('btn-logout').style.display = 'none';
-    showLoginScreen();
+    showMenu();
 }
 
 function initLogoutVisibility() {
-    if (currentUser) {
-        document.getElementById('btn-logout').style.display = 'block';
-    } else {
-        document.getElementById('btn-logout').style.display = 'none';
-    }
+    GameUI.setLogoutVisible(false);
 }
 
-// after definitions we also attach handlers in case onload fails
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOMContentLoaded - attaching login handlers');
-    const btnLogin = document.getElementById('btn-login');
-    if(btnLogin) btnLogin.onclick = loginUser;
-    const btnRegister = document.getElementById('btn-register');
-    if(btnRegister) btnRegister.onclick = registerUser;
     const btnGuest = document.getElementById('btn-guest');
     if(btnGuest) btnGuest.onclick = () => {
-        console.log('guest play (DOMContentLoaded handler)');
-        currentUser = null;
-        localStorage.removeItem('balafrozzo_user');
         hideLoginScreen();
         showMenu();
         initLogoutVisibility();
@@ -216,125 +141,32 @@ document.addEventListener('DOMContentLoaded', () => {
     if(btnLogout) btnLogout.onclick = logoutUser;
 });
 
-// generic helper for server API calls
-async function apiRequest(path, method = 'GET', body = null) {
-    let opts = { method, headers: {} };
-    if (body) {
-        opts.headers['Content-Type'] = 'application/json';
-        opts.body = JSON.stringify(body);
-    }
-    let res = await fetch(path, opts);
-    return res.json();
-}
-
-async function loadProfile(user) {
-    try {
-        let data = await apiRequest(`/api/profile/${encodeURIComponent(user)}`);
-        statistiche = {
-            soldiTotali: data.soldi || 0,
-            giocate: data.giocate || 0,
-            vinte: data.vinte || 0,
-            folds: data.folds || 0,
-            raises: data.raises || 0,
-            allins: data.allins || 0,
-            roundsPlayed: data.roundsPlayed || 0,
-            roundsWon: data.roundsWon || 0,
-            roundsLost: data.roundsLost || 0
-        };
-        aggiornaStatsUI();
-        localStorage.setItem('balafrozzo_user', user);
-        currentUser = user;
-        hideLoginScreen();
-        showMenu();
-        initLogoutVisibility();
-    } catch (e) {
-        console.error('errore caricamento profilo', e);
-    }
-}
-
-async function salvaStatistiche() { 
-    // only persist stats in browser when tied to a logged‑in user
-    if (currentUser) {
-        localStorage.setItem('balafrozzo_stats', JSON.stringify(statistiche)); 
-        await apiRequest(`/api/profile/${encodeURIComponent(currentUser)}`, 'POST', {
-            soldi: statistiche.soldiTotali,
-            giocate: statistiche.giocate,
-            vinte: statistiche.vinte,
-            folds: statistiche.folds,
-            raises: statistiche.raises,
-            allins: statistiche.allins,
-            roundsPlayed: statistiche.roundsPlayed,
-            roundsWon: statistiche.roundsWon,
-            roundsLost: statistiche.roundsLost
-        });
-    }
+function salvaStatistiche() {
+    salvaStatisticheLocali();
 }
 
 function aggiornaStatsUI() {
-    document.getElementById('stat-soldi').innerText = `€ ${statistiche.soldiTotali}`;
-    document.getElementById('stat-giocate').innerText = statistiche.giocate;
-    document.getElementById('stat-vinte').innerText = statistiche.vinte;
-    if(document.getElementById('stat-folds')) document.getElementById('stat-folds').innerText = statistiche.folds;
-    if(document.getElementById('stat-raises')) document.getElementById('stat-raises').innerText = statistiche.raises;
-    if(document.getElementById('stat-allins')) document.getElementById('stat-allins').innerText = statistiche.allins;
-    if(document.getElementById('stat-rounds-played')) document.getElementById('stat-rounds-played').innerText = statistiche.roundsPlayed;
-    if(document.getElementById('stat-rounds-won')) document.getElementById('stat-rounds-won').innerText = statistiche.roundsWon;
-    if(document.getElementById('stat-rounds-lost')) document.getElementById('stat-rounds-lost').innerText = statistiche.roundsLost;
+    GameUI.renderStats(statistiche);
 }
 
-async function loginUser() {
-    console.log('loginUser clicked');
-    // export for inline/callback safety
-    window.loginUser = loginUser;
-    let user = document.getElementById('login-username').value.trim();
-    let pwd = document.getElementById('login-password').value;
-    if (!user || !pwd) {
-        document.getElementById('login-msg').innerText = 'Inserisci nome e password';
-        return;
+function loginUser() {
+    const nameField = document.getElementById('login-username');
+    const msg = document.getElementById('login-msg');
+    const user = nameField ? nameField.value.trim() : '';
+    if (msg) msg.innerText = '';
+    if (user) {
+        currentUser = user;
+        localStorage.setItem('balafrozzo_user', user);
+        localStorage.setItem('balafrozzo_player_name', user);
     }
-    try {
-        let resp = await apiRequest('/api/login', 'POST', { username: user, password: pwd });
-        if (resp.success) {
-            await loadProfile(user);
-        } else {
-            document.getElementById('login-msg').innerText = resp.error || 'Login failed';
-        }
-    } catch (e) {
-        console.error('login error', e);
-        document.getElementById('login-msg').innerText = 'Errore di rete o server';
-    }
+    hideLoginScreen();
+    showMenu();
+    initLogoutVisibility();
 }
 
-async function registerUser() {
-    console.log('registerUser clicked');
-    window.registerUser = registerUser;
-    let user = document.getElementById('login-username').value.trim();
-    let pwd = document.getElementById('login-password').value;
-    if (!user || !pwd) {
-        document.getElementById('login-msg').innerText = 'Inserisci nome e password';
-        return;
-    }
-    try {
-        let resp = await apiRequest('/api/register', 'POST', { username: user, password: pwd });
-        if (resp.success) {
-            document.getElementById('login-msg').innerText = 'Registrazione avvenuta, effettua il login.';
-        } else {
-            document.getElementById('login-msg').innerText = resp.error || 'Registration failed';
-        }
-    } catch (e) {
-        console.error('register error', e);
-        document.getElementById('login-msg').innerText = 'Errore di rete o server';
-    }
+function registerUser() {
+    loginUser();
 }
-
-const listaCharms = listaCharmsData;
-
-const dbJoker = dbJokerData;
-
-const balatroScores = balatroScoresData;
-
-// imported constants (semi, valori) and function ottieniValoreChip are used directly
-// from data.js; duplicates removed to avoid redeclaration errors.
 
 let charmScelto = null; 
 let rerollDisponibili = 0; 
@@ -357,7 +189,7 @@ const nomiFasi = ["PRE-FLOP", "FLOP", "TURN", "RIVER", "SHOWDOWN"];
 
 // === INIZIALIZZAZIONE ===
 window.onload = function() {
-    console.log('window.onload fired');
+    caricaStatisticheLocali();
     document.getElementById('stat-soldi').innerText = `€ ${statistiche.soldiTotali}`;
     document.getElementById('stat-giocate').innerText = statistiche.giocate; 
     document.getElementById('stat-vinte').innerText = statistiche.vinte;
@@ -375,57 +207,34 @@ window.onload = function() {
     };
     document.getElementById('btn-conferma-charm').onclick = avviaDalMenu;
 
-    // login screen handlers (repeat in showLoginScreen too)
     const bLogin = document.getElementById('btn-login');
-    if (bLogin) { console.log('attaching login handler in onload'); bLogin.onclick = loginUser; }
+    if (bLogin) { bLogin.onclick = loginUser; }
     const bReg = document.getElementById('btn-register');
-    if (bReg) { console.log('attaching register handler in onload'); bReg.onclick = registerUser; }
+    if (bReg) { bReg.onclick = registerUser; }
     const bGuest = document.getElementById('btn-guest');
     if (bGuest) { 
-        console.log('attaching guest handler in onload'); 
         bGuest.onclick = () => {
-            console.log('guest play');
             currentUser = null;
-            localStorage.removeItem('balafrozzo_user');
             hideLoginScreen();
             showMenu();
             initLogoutVisibility();
         };
     }
-    document.getElementById('btn-logout').onclick = logoutUser;
+    const bLogout = document.getElementById('btn-logout');
+    if (bLogout) bLogout.onclick = logoutUser;
 
-    // always start with login screen visible unless a user is already stored
-    console.log('checking currentUser', currentUser);
-    if (currentUser) {
-        loadProfile(currentUser); // this will hide the login overlay and show the menu
-    } else {
-        showLoginScreen();
-    }
+    hideLoginScreen();
+    showMenu();
     initLogoutVisibility();
 };
 
 function mostraSceltaCharms() {
-    document.getElementById('menu-base').style.display = 'none'; 
-    document.getElementById('schermata-charms').style.display = 'flex';
-    // hide score panel until game starts
-    document.getElementById('pannello-punteggi').style.display = 'none';
-    let cont = document.getElementById('contenitore-charms'); 
-    cont.innerHTML = '';
-    for(let c of listaCharms) {
-        let sbloccato = (statistiche.giocate >= c.reqGiocate && statistiche.vinte >= c.reqVinte);
-        let div = document.createElement('div'); 
-        div.className = `carta-charm ${sbloccato ? '' : 'bloccato'}`;
-        div.innerHTML = `<div class="charm-icona">${sbloccato ? c.icona : '🔒'}</div><div style="font-weight:bold; color:#f1c40f; margin-bottom:5px;">${c.nome}</div><div style="font-size:12px; color:#ccc;">${sbloccato ? c.desc : `Sblocca: Gioca ${c.reqGiocate}, Vinci ${c.reqVinte}`}</div>`;
-        if(sbloccato) { 
-            div.onclick = function() { 
-                document.querySelectorAll('.carta-charm').forEach(el => el.classList.remove('selezionato')); 
-                div.classList.add('selezionato'); 
-                charmScelto = c.id; 
-                document.getElementById('btn-conferma-charm').disabled = false; 
-            }; 
-        }
-        cont.appendChild(div);
-    }
+    GameUI.renderCharmSelection(getListaCharms(), statistiche, (charm, card) => {
+        document.querySelectorAll('.carta-charm').forEach(el => el.classList.remove('selezionato'));
+        card.classList.add('selezionato');
+        charmScelto = charm.id;
+        document.getElementById('btn-conferma-charm').disabled = false;
+    });
 }
 
 function getColoreJoker(rarita) {
@@ -539,52 +348,11 @@ function aggiornaInventarioShop() {
 }
 
 function costruisciHTMLPostazioni() {
-    for(let g of giocatori) {
-        let div = document.getElementById(g.posId); 
-        div.style.display = 'flex';
-        div.innerHTML = `
-            <div class="box-fluttuante" id="scorebox-${g.id}">
-                <div class="titolo-mano" id="scoretitolo-${g.id}">Mano</div>
-                <div class="zona-calcolo"><span class="c-chips" id="scorechips-${g.id}">0</span><span style="color:#fff; font-size:14px; margin:0 3px;">X</span><span class="c-mult" id="scoremult-${g.id}">0</span></div>
-            </div>
-            <div class="zona-joker" id="jokers-${g.id}"></div>
-            <div class="nome-giocatore">${g.nome}</div>
-            <div class="badge-soldi" id="testosoldi-${g.id}">€ ${g.soldi}</div>
-            <div class="msg-fold" id="msgfold-${g.id}" style="display:none;">FOLD</div>
-            <div class="mano-carte" id="mano-${g.id}"></div>
-        `;
-    }
+    GameUI.renderPlayers(giocatori);
 }
 
 function aggiornaGraficaGiocatori() {
-    for(let g of giocatori) {
-        let textSoldi = document.getElementById(`testosoldi-${g.id}`); 
-        if(textSoldi) textSoldi.innerText = `€ ${g.soldi}`;
-        let divPos = document.getElementById(g.posId); 
-        let msgFold = document.getElementById(`msgfold-${g.id}`);
-        if(divPos) { 
-            if (g.inGioco) { 
-                divPos.style.opacity = '1'; 
-                msgFold.style.display = 'none'; 
-            } else { 
-                divPos.style.opacity = '0.4'; 
-                msgFold.style.display = 'block'; 
-            } 
-        }
-        
-        let containerJoker = document.getElementById(`jokers-${g.id}`);
-        if(containerJoker) {
-            containerJoker.innerHTML = '';
-            if(g.charm) containerJoker.innerHTML += `<div class="mini-joker charm-icon">✨<div class="custom-tooltip"><b>${g.charm.nome}</b><br>${g.charm.desc}</div></div>`;
-            for(let j of g.jokers) {
-                let c = getColoreJoker(j.rarita);
-                let edClass = getClasseEdizione(j.edition);
-                let badgeStr = j.edition ? `<br>[${j.edition}]` : "";
-                containerJoker.innerHTML += `<div class="mini-joker ${c} ${edClass}">J<div class="custom-tooltip"><b>${j.nome}</b>${badgeStr}<br>${j.desc}</div></div>`;
-            }
-        }
-    }
-    document.getElementById('valore-piatto').innerText = `€ ${piatto}`;
+    GameUI.renderBoard(giocatori, piatto, getColoreJoker, getClasseEdizione);
     aggiornaSidebarJokers();
 }
 
@@ -603,7 +371,7 @@ function avviaDalMenu() {
     if(maxRounds < 1) maxRounds = 1;
     
     let soldiIniziali = (charmScelto === 3) ? statistiche.soldiTotali + 1500 : statistiche.soldiTotali + 1000;
-    let mioCharmDati = listaCharms.find(c => c.id === charmScelto);
+    let mioCharmDati = getListaCharms().find(c => c.id === charmScelto);
     
     giocatori = [];
     giocatori.push({ 
@@ -611,7 +379,7 @@ function avviaDalMenu() {
         carte: [], posId: 'pos-giocatore', charm: mioCharmDati, jokers: [] 
     });
     
-    let charmsSbloccati = listaCharms.filter(c => statistiche.giocate >= c.reqGiocate && statistiche.vinte >= c.reqVinte);
+    let charmsSbloccati = getListaCharms().filter(c => statistiche.giocate >= c.reqGiocate && statistiche.vinte >= c.reqVinte);
     for(let i=1; i<=numBot; i++) {
         let botCharm = charmsSbloccati[Math.floor(Math.random() * charmsSbloccati.length)];
         let soldiBot = (botCharm.id === 3) ? 1500 : 1000;
@@ -734,86 +502,11 @@ async function faiRerollCharm() {
 }
 
 function valutaManoCompleta(carteMano, carteTerra, proprietario) {
-    let tutte = carteMano.concat(carteTerra);
-    if(tutte.length === 0) return { nome: "Carta Alta", base: { chips: 0, mult: 0}, migliori: [], carteAttive: [] };
-
-    let haScorciatoia = proprietario.jokers.some(j => j.id === "reg_u1");
-    // check for special jokers that alter the rules
-    let haDaltonico = proprietario.jokers.some(j => j.id === "reg_r1"); // unisce cuori+quadri o picche+fiori
-
-    tutte.sort((a,b) => b.valoreChip - a.valoreChip);
-    let counts = {}; 
-    let suits = {};
-    for (let c of tutte) { 
-        counts[c.valoreChip] = (counts[c.valoreChip] || 0) + 1; 
-        suits[c.seme] = (suits[c.seme] || 0) + 1; 
-    }
-
-    // flush detection. normally we require 5 cards of the same suit.
-    // when the 'Daltonico' joker (id reg_r1) is present we treat hearts + diamonds
-    // as a single "red" suit and clubs + spades as a single "black" suit.
-    let isFlush = false;
-    if (haDaltonico) {
-        // combine red suits and black suits
-        let rossi = (suits['♥'] || 0) + (suits['♦'] || 0);
-        let neri = (suits['♣'] || 0) + (suits['♠'] || 0);
-        if (rossi >= 5 || neri >= 5) {
-            isFlush = true;
-        }
-    } else {
-        // standard rule: any individual suit reaching 5 cards
-        for (let s in suits) {
-            if (suits[s] >= 5) {
-                isFlush = true;
-                break;
-            }
-        }
-    }
-
-    let uniqueVals = [...new Set(tutte.map(c => c.valoreChip))]; 
-    if (uniqueVals.includes(14)) uniqueVals.push(1); 
-    uniqueVals.sort((a,b) => b-a);
-    let isStraight = false; 
-    let straightCount = 1;
-    let cartePerScala = haScorciatoia ? 4 : 5;
-    for (let i = 0; i < uniqueVals.length - 1; i++) { 
-        if (uniqueVals[i] - 1 === uniqueVals[i+1]) { 
-            straightCount++; 
-            if (straightCount >= cartePerScala) { 
-                isStraight = true; 
-                break; 
-            } 
-        } else { 
-            straightCount = 1; 
-        } 
-    }
-
-    let freq = Object.values(counts).sort((a,b) => b-a); 
-    let maxFreq = freq[0] || 0; 
-    let secFreq = freq[1] || 0;
-
-    let nomeMano = "Carta Alta";
-    if (isStraight && isFlush) { nomeMano = "Scala Colore"; } 
-    else if (maxFreq === 4) nomeMano = "Poker"; 
-    else if (maxFreq === 3 && secFreq >= 2) nomeMano = "Full"; 
-    else if (isFlush) nomeMano = "Colore"; 
-    else if (isStraight) nomeMano = "Scala"; 
-    else if (maxFreq === 3) nomeMano = "Tris"; 
-    else if (maxFreq === 2 && secFreq >= 2) nomeMano = "Doppia Coppia"; 
-    else if (maxFreq === 2) nomeMano = "Coppia";
-
-    let multBase = balatroScores[nomeMano].mult;
-    if (proprietario.charm && proprietario.charm.id === 4 && (nomeMano === "Carta Alta" || nomeMano === "Coppia")) { 
-        multBase += 1; 
-    }
-
-    let migliori5 = tutte.slice(0,5); 
-    let carteAttive = [];
-    if (nomeMano === "Carta Alta") carteAttive = [tutte[0]]; 
-    else if (nomeMano === "Coppia" || nomeMano === "Doppia Coppia" || nomeMano === "Tris" || nomeMano === "Poker" || nomeMano === "Full") carteAttive = tutte.filter(c => counts[c.valoreChip] >= 2); 
-    else carteAttive = migliori5; 
-
-    return { nome: nomeMano, base: { chips: balatroScores[nomeMano].chips, mult: multBase }, migliori: migliori5, carteAttive: carteAttive };
+    const result = HandEvaluator.evaluate(carteMano, carteTerra, proprietario, balatroScores);
+    window.dispatchEvent(new CustomEvent('balafrozzo:handEvaluated', {
+        detail: { result, proprietario }
+    }));
+    return result;
 }
 
 function aggiornaRadarMano() {
@@ -915,13 +608,7 @@ function assegnaEdizione(giocatore) {
 }
 
 function generaJokerRandom() {
-    let r = Math.random();
-    let pool = dbJoker.common;
-    if (r > 0.65 && r <= 0.88) pool = dbJoker.uncommon;
-    else if (r > 0.88 && r <= 0.98) pool = dbJoker.rare;
-    else if (r > 0.98) pool = dbJoker.legendary;
-    let baseJoker = pool[Math.floor(Math.random() * pool.length)];
-    return JSON.parse(JSON.stringify(baseJoker));
+    return JokerFactory.create(getDbJoker());
 }
 
 function popolaCarteShop() {
@@ -1054,7 +741,7 @@ function apriShop() {
     timerDisplay.innerText = `${shopTimeRemaining}s`;
 }
 
-function hiudiShop() {
+function chiudiShop() {
     playChipClick();
     if (shopTimerInterval) clearInterval(shopTimerInterval); // stop the timer
     document.getElementById('schermo-shop').style.display = 'none';

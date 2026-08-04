@@ -97,70 +97,11 @@
     background: rgba(255,255,255,0.8) !important;
 }
 
-        /* === AREA GIOCO E TAVOLO === */
-        #area-gioco { flex-grow: 1; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px; position: relative; }
-        
-        #header-partita { display: flex; justify-content: space-between; width: 800px; margin-bottom: 5px; }
-        #indicatore-round { background-color: #8e44ad; color: #fff; padding: 10px 20px; border: 3px solid #fff; border-radius: 5px; font-size: 18px; font-weight: bold; box-shadow: 2px 2px 0 #000;}
-        #indicatore-fase { background-color: #000; color: #00ffff; padding: 10px 30px; border: 3px solid #00ffff; border-radius: 5px; font-size: 20px; font-weight: bold; z-index: 20; text-transform: uppercase;}
-
-        #tavolo-verde { width: 800px; height: 450px; background-color: #2b5c3a; border-radius: 225px; border: 15px solid #5c3a21; position: relative; box-shadow: inset 0 0 50px rgba(0,0,0,0.5), 10px 10px 30px rgba(0,0,0,0.7); }
-
-        .postazione { position: absolute; display: flex; flex-direction: column; align-items: center; width: 140px; transform: translate(-50%, -50%); transition: opacity 0.3s; }
-        .nome-giocatore { background: rgba(0,0,0,0.8); padding: 2px 8px; border-radius: 4px; font-size: 14px; font-weight: bold; margin-bottom: 5px; text-align: center;}
-        .badge-soldi { background: linear-gradient(180deg, #f1c40f, #e67e22); color: #000; font-size: 14px; font-weight: 900; padding: 4px 15px; border-radius: 20px; border: 2px solid #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.5); margin-bottom: 5px; }
-        .mano-carte { display: flex; gap: -5px; margin-top: 5px; min-height: 75px; } .mano-carte .carta:nth-child(1) { transform: rotate(-5deg); z-index: 1;} .mano-carte .carta:nth-child(2) { margin-left: -5px; transform: rotate(5deg); z-index: 2;}
-        
-        .zona-joker { display: flex; gap: 2px; height: 30px; margin-bottom: 2px; position: relative; }
-        .mini-joker { width: 20px; height: 30px; background: #fff; border: 1px solid #000; border-radius: 2px; font-size: 10px; display:flex; justify-content:center; align-items:center; box-shadow: 1px 1px #000; cursor: help; position: relative; color: black;}
-        
-        .custom-tooltip { display: none; position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.95); border: 1px solid #fff; padding: 8px; border-radius: 5px; width: 150px; text-align: center; color: #fff; font-size: 11px; z-index: 300; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
-        .mini-joker:hover .custom-tooltip { display: block; }
-
-        .charm-icon { background: #1a1a1a; border-color: #f1c40f; color: #f1c40f; }
-        .joker-common { border-color: #aaa; } .joker-uncommon { background: #d0e8ce; border-color: #2ecc71; } .joker-rare { background: #d0e0f2; border-color: #3498db; } .joker-legendary { background: #fdf5e6; border-color: #e67e22; color: #e67e22; }
-
-        /* Posizioni Bot Ottimizzate per i Tooltip */
-        #pos-giocatore { top: 105%; left: 50%; } 
-        #pos-bot-1 { top: 78%; left: 0%; } 
-        #pos-bot-2 { top: 22%; left: 0%; } 
-        #pos-bot-3 { top: 78%; left: 100%; } 
-        #pos-bot-4 { top: 22%; left: 100%; } 
-        #pos-bot-5 { top: 0%; left: 50%; }
-
-        #centro-tavolo { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; width: 400px; }
-        #area-piatto { font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 15px; color: #fff; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 10px;}
-        #carte-comuni { display: flex; gap: 5px; justify-content: center; height: 80px; }
-
-        .carta { width: 50px; height: 75px; background-color: white; color: black; border: 2px solid #000; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; box-shadow: 2px 2px 0px #000; transition: transform 0.3s ease-in-out, box-shadow 0.3s, border-color 0.3s; }
-        .animazione-entrata { animation: entra 0.4s ease-out backwards; } @keyframes entra { 0% { transform: translateY(-50px) scale(0); opacity: 0; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
-        .rossa { color: #d32f2f; }
-        .coperta { background-color: #1a1a1a; color: transparent !important; background-image: repeating-linear-gradient(45deg, #333 10%, transparent 10%, transparent 30%, #333 30%, #333), repeating-linear-gradient(45deg, #333 10%, #1a1a1a 10%, #1a1a1a 30%, #333 30%, #333); }
-        .carta-evidenziata { box-shadow: 0 0 15px #f1c40f, inset 0 0 5px #f1c40f !important; border-color: #f1c40f !important; transform: translateY(-10px) !important; z-index: 10 !important; }
-        .fiches-volanti { position: absolute; background-color: #85bb65; color: #000; padding: 5px 10px; border: 2px dashed #000; border-radius: 5px; font-size: 14px; font-weight: bold; z-index: 100; pointer-events: none; transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
-
-        /* Controlli Gioco */
-        #controlli { background: #111; padding: 15px; border-radius: 10px; display: flex; gap: 10px; align-items: center; z-index: 20;}
-        button { padding: 10px 20px; font-size: 16px; font-family: inherit; font-weight: bold; background-color: #3498db; color: white; border: 2px solid #000; cursor: pointer; border-radius: 5px; }
-        button:hover { filter: brightness(1.2); } button:disabled { background-color: #555; cursor: not-allowed; }
-        .btn-piccolo { padding: 10px; width: 40px; font-size: 20px; background-color: #e67e22; }
-        .btn-raise { background-color: #e67e22; width: 160px; } .btn-fold { background-color: #e74c3c; } .btn-allin { background-color: #8e44ad; }
-        #btn-reroll { background-color: #9b59b6; display: none; } #btn-reroll:hover { background-color: #8e44ad; }
-
-        /* Shop */
-        #schermo-shop { display: none; flex-direction: column; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000 url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60"><rect fill="%23111" width="60" height="60"/><path fill="%23222" d="M0 0L60 60M60 0L0 60"/></svg>'); z-index: 300; overflow-y: auto; padding: 30px; align-items: center; }
-        .titolo-shop { font-size: 60px; color: #f1c40f; text-shadow: 0 0 20px #f1c40f; margin-bottom: 10px; font-weight: bold; }
-        .sottotitolo-shop { color: #fff; font-size: 18px; margin-bottom: 20px; }
-        .griglia-joker-shop { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 20px 0; max-width: 1200px; }
         .carta-joker-shop {
-            background: rgba(20,20,20,0.95);
-            border: 3px solid;
-            padding: 15px;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
-            flex-direction: column;
             justify-content: space-between;
             height: 220px; /* fixed so cost stays at bottom */
             box-sizing: border-box;
@@ -197,20 +138,18 @@
         .c-mult { color: #e74c3c; font-weight: bold; font-size: 16px; }
         .msg-fold { color: #e74c3c; font-weight: bold; font-size: 16px; text-transform: uppercase; }
         .vincitore-glow { border-color: #2ecc71 !important; box-shadow: 0 0 20px #2ecc71 !important; }
+
+        .btn-secondary { background: #34495e; }
     </style>
 </head>
 <body>
     <!-- LOGIN SCREEN -->
     <!-- login overlay sits on top of everything and covers whole viewport -->
-    <div id="schermata-login" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;">
+    <div id="schermata-login" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:none;flex-direction:column;justify-content:center;align-items:center;z-index:9999;">
         <div style="background:#111;padding:30px;border:3px solid #fff;border-radius:10px;">
-            <h2 style="color:#f1c40f; text-align:center;margin-top:0;">Accedi</h2>
-            <input type="text" id="login-username" placeholder="Nome utente" class="input-menu" style="width:200px;margin-bottom:10px;"><br>
-            <input type="password" id="login-password" placeholder="Password" class="input-menu" style="width:200px;margin-bottom:10px;"><br>
-            <button class="btn-menu btn-menu-start" id="btn-login" style="width:200px;">Login</button>
-            <button class="btn-menu" id="btn-register" style="width:200px;margin-top:10px;">Registrati</button>
-            <button class="btn-menu" id="btn-guest" style="width:200px;margin-top:10px;background:#9b59b6;">Gioca come ospite</button>
-            <!-- reserve space so message does not push layout around -->
+            <h2 style="color:#f1c40f; text-align:center;margin-top:0;">Modalità offline</h2>
+            <input type="text" id="login-username" placeholder="Nome giocatore" class="input-menu" style="width:200px;margin-bottom:10px;"><br>
+            <button class="btn-menu btn-menu-start" id="btn-guest" style="width:200px;">Entra nel gioco</button>
             <div id="login-msg" style="color:#e74c3c; margin-top:10px; font-size:12px; min-height:18px;"></div>
         </div>
     </div>
@@ -311,7 +250,14 @@
         </div>
     </div>
 
-    <!-- Script module principale che importa tutto -->
-    <script type="module" src="js/main.js" defer></script>
+    <script src="js/audio-config.js" defer></script>
+    <script src="js/audio-service.js" defer></script>
+    <script src="js/joker-factory.js" defer></script>
+    <script src="js/Charm.js" defer></script>
+    <script src="js/Joker.js" defer></script>
+    <script src="js/ui-view.js" defer></script>
+    <script src="js/hand-evaluator.js" defer></script>
+    <!-- Client singleplayer senza backend -->
+    <script src="js/main.js" defer></script>
 </body>
 </html>
