@@ -179,6 +179,7 @@ let carteComuniDati = [];
 let carteComuniDivs = [];
 let faseGioco = 0; 
 let valoreRaise = 50; 
+let raiseActionLock = false;
 let puntataAttualeDaCoprire = 0; 
 let roundCorrente = 1; 
 let maxRounds = 5;
@@ -414,6 +415,7 @@ function ritornaAlMenu() {
     faseGioco = 0; 
     piatto = 0; 
     puntataAttualeDaCoprire = 0;
+    raiseActionLock = false;
     giocatori = []; 
     charmScelto = null;
     document.querySelectorAll('.carta-charm').forEach(el => el.classList.remove('selezionato'));
@@ -478,6 +480,7 @@ async function lanciaFiches(idPostazione, valore, testoSpeciale = null) {
 function impostaBottoni(attivi) { 
     document.querySelectorAll('.btn-gioco').forEach(b => b.disabled = !attivi); 
     document.getElementById('btn-inizia').disabled = attivi;
+    if (attivi) raiseActionLock = false;
     let btnCheck = document.getElementById('btn-check');
     if (puntataAttualeDaCoprire > 0) { 
         btnCheck.innerText = `Call (€${puntataAttualeDaCoprire})`; 
@@ -771,7 +774,8 @@ function cambiaRaise(d) {
 }
 
 async function faiRaise() {
-    // aggiorna statistiche raise
+    if (raiseActionLock) return;
+
     statistiche.raises++;
     aggiornaStatsUI();
     salvaStatistiche();
@@ -779,10 +783,15 @@ async function faiRaise() {
     let me = giocatori[mioIndice]; 
     let tot = puntataAttualeDaCoprire + valoreRaise; 
     if (me.soldi >= tot) {
+        raiseActionLock = true;
+        impostaBottoni(false);
         me.soldi -= tot; 
         piatto += tot; 
-        await lanciaFiches(me.posId, tot); 
-        impostaBottoni(false); 
+        try {
+            await lanciaFiches(me.posId, tot); 
+        } finally {
+            raiseActionLock = false;
+        }
         let botA = []; 
         let sc = carteComuniDati.slice(0, (faseGioco === 1 ? 3 : (faseGioco === 2 ? 4 : (faseGioco >= 3 ? 5 : 0))));
         for(let g of giocatori) { 
@@ -1115,12 +1124,12 @@ async function avviaShowdown() {
     if (vincitoreId === 0) {
         statistiche.vinte++;
         statistiche.roundsWon++;
-        bannerCentrale.innerHTML = `🔥 HAI VINTO €${piatto}! 🔥<br><span style="font-size: 20px;">Punteggio: ${risultati[0].tot.toLocaleString()}</span>`;
+        bannerCentrale.innerHTML = `HAI VINTO €${piatto}<br><span style="font-size: 20px;">Punteggio: ${risultati[0].tot.toLocaleString()}</span>`;
         bannerCentrale.style.borderColor = "#2ecc71"; 
         bannerCentrale.style.boxShadow = "0 0 40px #2ecc71";
     } else {
         statistiche.roundsLost++;
-        bannerCentrale.innerHTML = `🤖 ${nomeVincitore.toUpperCase()} VINCE €${piatto}! 🤖<br><span style="font-size: 20px;">Punteggio: ${risultati[0].tot.toLocaleString()}</span>`;
+        bannerCentrale.innerHTML = `${nomeVincitore.toUpperCase()} VINCE €${piatto}!<br><span style="font-size: 20px;">Punteggio: ${risultati[0].tot.toLocaleString()}</span>`;
         bannerCentrale.style.borderColor = "#e74c3c"; 
         bannerCentrale.style.boxShadow = "0 0 40px #e74c3c";
     }
